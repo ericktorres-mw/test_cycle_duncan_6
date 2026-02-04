@@ -51,8 +51,8 @@ define(["require", "exports", "N/log", "N/file", "N/ui/serverWidget", "./Functio
                 //const complementaryMinAmount = calculateMinimumOrderAmount(subTotal as number, minAmount, surchangePercentage);
                 var minimumOrderChargeTotal = removeAllMinimumOrderChargeLines(newRecord);
                 var actualSubTotal = Number(subTotal) - Number(minimumOrderChargeTotal);
-                var newShippingCost = actualSubTotal * (surchangePercentage / 100);
-                var complementaryMinAmount = minAmount - (Number(actualSubTotal) + Number(newShippingCost));
+                var newShippingCost = roundTwoDecimals(actualSubTotal * (surchangePercentage / 100));
+                var complementaryMinAmount = Math.abs(minAmount - (Number(actualSubTotal) + Number(newShippingCost)));
                 log.debug("[beforeSubmit] surchangePercentage / 100", surchangePercentage / 100);
                 log.debug("[beforeSubmit] subTotal", subTotal);
                 log.debug("[beforeSubmit] minimumOrderChargeTotal", minimumOrderChargeTotal);
@@ -126,6 +126,9 @@ define(["require", "exports", "N/log", "N/file", "N/ui/serverWidget", "./Functio
             }
         }
         return -1;
+    }
+    function roundTwoDecimals(value) {
+        return Math.round(value * 100) / 100;
     }
     function handleError(pError) {
         log.error({ title: "Error", details: pError.message });
