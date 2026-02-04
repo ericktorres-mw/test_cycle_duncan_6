@@ -14,6 +14,41 @@ define([
   "N/encode",
   "N/format",
 ], function (record, search, runtime, log, file, encode, format) {
+  // Account ID that this restlet was deployed for - injected during SDF deployment
+  // This constant is compared against the expectedAccountId sent from the backend
+  const DEPLOYED_ACCOUNT_ID = "1233958_SB1";
+
+  /**
+   * Validates that the deployed account ID matches the expected account ID from the backend.
+   * This detects sandbox refresh scenarios where the restlet was deployed for a different account.
+   * @param {string|null} expectedAccountId - The account ID sent from the backend (optional)
+   * @returns {Object|null} Returns error object if validation fails, null if validation passes or skipped
+   */
+  function validateAccountId(expectedAccountId) {
+    // Skip validation if no account ID was provided in the request
+    if (!expectedAccountId) {
+      return null;
+    }
+
+    if (DEPLOYED_ACCOUNT_ID !== expectedAccountId) {
+      log.error("Account Mismatch Detected", {
+        deployedAccountId: DEPLOYED_ACCOUNT_ID,
+        expectedAccountId: expectedAccountId,
+        message: "Possible sandbox refresh detected - restlet was deployed for a different account"
+      });
+
+      return {
+        success: false,
+        error: "ACCOUNT_MISMATCH",
+        message: "Account ID mismatch detected. This may indicate a sandbox refresh.",
+        deployedAccountId: DEPLOYED_ACCOUNT_ID,
+        expectedAccountId: expectedAccountId
+      };
+    }
+
+    return null;
+  }
+
   const BATCH_USAGE_THRESHOLD = 100;
 
   // File Cabinet root folders to search
@@ -150,6 +185,12 @@ define([
   }
 
   function doGet(requestParams) {
+    // Validate account ID if provided in the request
+    var accountValidationError = validateAccountId(requestParams.expectedAccountId);
+    if (accountValidationError) {
+      return accountValidationError;
+    }
+
     logger.debug(
       "RESTlet GET",
       "Request received with params: " + JSON.stringify(requestParams)
@@ -172,6 +213,12 @@ define([
 
   function doPost(requestBody) {
     logCollector.clear();
+
+    // Validate account ID if provided in the request
+    var accountValidationError = validateAccountId(requestBody.expectedAccountId);
+    if (accountValidationError) {
+      return accountValidationError;
+    }
 
     var action = requestBody.action;
     // Extract custom SuiteScripts folder name (defaults to "SuiteScripts")

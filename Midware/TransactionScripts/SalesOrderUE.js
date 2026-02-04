@@ -86,7 +86,7 @@ define(["require", "exports", "N/log", "N/file", "N/ui/serverWidget", "./Functio
                 });
                 newRecord.setSublistValue({
                     sublistId: "item",
-                    fieldId: "rate",
+                    fieldId: "amount",
                     line: 0,
                     value: complementaryMinAmount,
                 });
