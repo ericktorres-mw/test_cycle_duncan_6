@@ -3,20 +3,12 @@
  * @developer Ignacio A.
  * @contact contact@midware.net
  */
-define(["require", "exports", "N/https", "N/search"], function (require, exports, https, search) {
+define(["require", "exports", "N/https", "N/search", "N/log"], function (require, exports, https, search, log) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getESurchargePercentageOfTotal = exports.calculateMinimumOrderAmount = exports.getCustomerMinimumOrderAmount = void 0;
     var queriesCache = {};
     function getCustomerMinimumOrderAmount(customerId) {
-        if (queriesCache["".concat(customerId, "-custentity_mw_minimum_order_amount")]) {
-            var _a = queriesCache["".concat(customerId, "-custentity_mw_minimum_order_amount")], executionTime = _a.executionTime, value = _a.value;
-            var currentTime = Date.now();
-            var cacheExpirationTime = 0; //2 * 60 * 1000; // 2 minutes in milliseconds
-            if (currentTime - executionTime < cacheExpirationTime) {
-                return value;
-            }
-        }
         var customerLookup = search.lookupFields({
             type: search.Type.CUSTOMER,
             id: customerId,
@@ -25,10 +17,6 @@ define(["require", "exports", "N/https", "N/search"], function (require, exports
         var minimumOrderQuantity = customerLookup && customerLookup.custentity_mw_minimum_order_amount
             ? Number(customerLookup.custentity_mw_minimum_order_amount)
             : getGlobalCustomerMinimumOrderAmount();
-        queriesCache["".concat(customerId, "-custentity_mw_minimum_order_amount")] = {
-            executionTime: Date.now(),
-            value: minimumOrderQuantity,
-        };
         return minimumOrderQuantity;
     }
     exports.getCustomerMinimumOrderAmount = getCustomerMinimumOrderAmount;
@@ -37,6 +25,7 @@ define(["require", "exports", "N/https", "N/search"], function (require, exports
             scriptId: "customscript_mw_comp_info_st",
             deploymentId: "customdeploy_mw_comp_info_st_d",
         });
+        log.debug("getGlobalCustomerMinimumOrderAmount", response);
         if (response) {
             return Number(response.body);
         }

@@ -24,7 +24,7 @@ define(["require", "exports", "N/log", "N/file", "N/ui/serverWidget", "./Functio
             var isViewMode = type === UserEventType.VIEW;
             var minimumOrderAmount = getMinimumOrderCharge(newRecord);
             var subTotal = newRecord.getValue({ fieldId: "subtotal" });
-            var actualSubTotal = Number(subTotal) - Number(minimumOrderAmount);
+            var actualSubTotal = Math.abs(Number(subTotal) - Number(minimumOrderAmount));
             summaryTableScriptInjection.defaultValue = "<script>jQuery(function(){ require(['".concat(clientScriptURL, "'], function(module){module.addMinimumOrderChargeToSummary(").concat(minimumOrderAmount, ", ").concat(actualSubTotal, ", ").concat(isViewMode, ");});});</script>");
         }
         catch (error) {
@@ -39,9 +39,6 @@ define(["require", "exports", "N/log", "N/file", "N/ui/serverWidget", "./Functio
             var isEditMode = type === UserEventType.EDIT;
             if (!isCreateMode && !isEditMode)
                 return;
-            var complementOrderMin = newRecord.getValue({
-                fieldId: "custbody_mw_complement_order_min",
-            });
             var customerOverride = newRecord.getValue({ fieldId: "custbody_mw_order_amount_override" });
             if (!customerOverride) {
                 var customerId = newRecord.getValue({ fieldId: "entity" });
@@ -111,7 +108,7 @@ define(["require", "exports", "N/log", "N/file", "N/ui/serverWidget", "./Functio
         for (var i = lineCount - 1; i >= 0; i--) {
             var lineDescription = pRecord.getSublistValue({ sublistId: "item", fieldId: "description", line: i });
             if (lineDescription === "Minimum Order Charge") {
-                minimumOrderChargeTotal += Number(pRecord.getSublistValue({ sublistId: "item", fieldId: "rate", line: i }));
+                minimumOrderChargeTotal += Number(pRecord.getSublistValue({ sublistId: "item", fieldId: "amount", line: i }));
                 pRecord.removeLine({ sublistId: "item", line: i });
             }
         }
@@ -122,7 +119,7 @@ define(["require", "exports", "N/log", "N/file", "N/ui/serverWidget", "./Functio
         for (var i = 0; i < lineCount; i++) {
             var lineDescription = pRecord.getSublistValue({ sublistId: "item", fieldId: "description", line: i });
             if (lineDescription === "Minimum Order Charge") {
-                return pRecord.getSublistValue({ sublistId: "item", fieldId: "rate", line: i });
+                return pRecord.getSublistValue({ sublistId: "item", fieldId: "amount", line: i });
             }
         }
         return -1;
